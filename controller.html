@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" content="チャットルーム">
+<title>chat</title>
+<script type="text/javascript" src="utils.js" ></script>
+<script type="text/javascript">
+
+	var webSocket;
+	window.onload = function() {
+	
+		//	パラメータから入り込むチャットルームを含めたwebsocketURLを生成。
+		var params = getParamsFromQuery();
+		var forRtoA = document.createElement('a');
+		forRtoA.href = "loadMessage";
+		var url = forRtoA.href.replace("http://", "ws://").replace("https://", "wss://");
+		var title = document.getElementById("title");
+		if(params["chatroomId"]){
+			url += "?chatroomId=" + params["chatroomId"];
+			title.innerText = "チャットルームNo" +  params["chatroomId"];
+		}else{
+			url += "?chatroomId=0";
+			title.innerText = "チャットルームNo0";
+		}
+		
+		webSocket = new WebSocket(url);
+
+		var messageArea = document.getElementById("messageArea");
+		var appendMessage = function(value, color) {
+			var messageElement = document.createElement("div");
+			messageElement.style.color = color;
+			messageElement.innerText = value;
+			messageArea.insertBefore(messageElement, messageArea.firstChild);
+		}
+		webSocket.onopen = function() {
+			appendMessage("Opened", "blue");
+		}
+		webSocket.onclose = function() {
+			appendMessage("Closed", "red");
+		}
+		webSocket.onmessage = function(message) {
+			appendMessage(message.data, "black");
+		}
+		webSocket.onerror = function(message) {
+			appendMessage(message, "red");
+		}
+		var messageInput = document.getElementById("messageInput");
+		messageInput.onkeypress = function(e) {
+			if (13 == e.keyCode) {
+				var message = messageInput.value;
+				if (webSocket && "" != message) {
+					webSocket.send(message);
+					messageInput.value = "";
+				}
+			}
+		}
+	}
+</script>
+</head>
+<body>
+	<div id="title"></div>
+	<div>
+		<input type="text" width="100%" id="messageInput" />
+	</div>
+	<div id="messageArea"></div>
+</body>
+</html>
